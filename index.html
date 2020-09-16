@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<!--
+    INSTRUCTIONS:
+
+    Here's a small problem that a client once asked us to solve as part of a larger project.
+    The client has an existing web-based system for delivering a test containing multiple choice
+    questions to a learner (the relevant parts of which are included on this page). The client
+    asked us to modify this code so that the test questions are delivered in a random order every
+    time a learner attempts the test. Furthermore, the order in which the answers to the questions
+    are presented should also be randomized.
+
+    The existing framework for creating and displaying a test has been provided for you below. Your
+    task is to comprehend the client's code and data structure then implement the `randomizeTest`
+    function to perform the randomization of the question and answer order. Please explain your work
+    and thought process.
+
+    Some background on the project from the client that may affect your solution:
+
+    - There are over 600 of these tests deployed to hundreds of thousands of users
+    - There are never more then 20 questions or so per test, each with no more than 6 answers but the
+      code should be able to handle an arbitrary number of both questions and answers
+    - This code is maintained by several developers in different organizations
+    - The code is only required to work in all modern browsers
+
+    When submitting your response, please rename this file to include your name.
+
+    If you have any questions, please do not hesitate to ask.
+-->
+<html lang="en">
+  <head>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto&display=swap"
+      rel="stylesheet"
+    />
+    <title>Rustici Software - Initial Developer Hiring Test</title>
+    <style>
+      body {
+        background-color: #333;
+        font-family: "Roboto", sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+      }
+
+      .header-bg {
+        background: rgb(29, 29, 29);
+        display: inline-flex;
+        border-radius: 10px;
+        margin: 0px 20px;
+      }
+
+      h2 {
+        color: #ffffff;
+        font-weight: bold;
+        font-size: 200%;
+        padding: 0px 10px;
+      }
+
+      ul {
+        display: block;
+        background-color: #f4f4f4;
+        padding: 20px 40px 40px 40px;
+        margin: 20px;
+        border-radius: 15px;
+      }
+
+      li.question {
+        padding-top: 5px;
+        padding-bottom: 5px;
+        margin-top: 10px;
+      }
+
+      label.choice {
+        display: block;
+      }
+
+      .correct {
+        color: #050505;
+        font-weight: bold;
+        background-color: #ece9db;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="header-bg">
+      <h2>Randomized Questions</h2>
+    </div>
+    <ul id="questions"></ul>
+
+    <script>
+      (function () {
+        //
+        // `randomizeTest` accepts and returns a `Test` object. The questions in the returned object should
+        // be in a random order. The order of the choices within each question should also be randomized.
+        //
+        const randomizeTest = (test) => {
+          //
+          // Your code to randomize questions and answers goes here
+          //
+
+          let questionRef,
+            choiceRef,
+            answerKey = [];
+
+          //This is building the answerKey Array which I will use when I randomize the choices to make sure the key is not lost in the process.
+
+          //
+          for (const i in test.choices)
+            for (const j in test.choices[i])
+              if (test.answers[i][j] === 1) answerKey.push(test.choices[i][j]);
+
+          (questionRef = [...test.questions]), (choiceRef = [...test.choices]);
+
+          test.questions.sort(() => Math.random() - 0.5);
+
+          for (const index1 in test.questions) {
+            // Loops from each index 0 to the length-1 of the questions array
+            for (const index2 in questionRef) {
+              // Loops through each index from 0 to the length-1 of the questionRef array
+              if (test.questions[index1] === questionRef[index2])
+                test.choices[index1] = choiceRef[index2];
+            }
+          }
+
+          test.choices.forEach((choiceBlock) =>
+            choiceBlock.sort(() => Math.random() - 0.5)
+          );
+
+          for (const index4 in test.choices) {
+            for (const index5 in test.choices[index4]) {
+              test.answers[index4][index5] = answerKey.includes(
+                test.choices[index4][index5]
+              )
+                ? 1
+                : 0;
+            }
+          }
+          return test;
+        };
+
+        function Test(questions, choices, answers) {
+          this.questions = questions;
+          this.choices = choices;
+          this.answers = answers;
+        }
+
+        //
+        // displays the sample test in the browser with the correct answer highlighted
+        //
+        function renderTest(test, parent) {
+          const randomizedTest = randomizeTest(test);
+
+          for (let i = 0; i < randomizedTest.questions.length; i += 1) {
+            const qElement = document.createElement("li");
+            let correctCount = 0;
+
+            qElement.setAttribute("class", "question");
+            qElement.appendChild(
+              document.createTextNode(randomizedTest.questions[i])
+            );
+
+            for (let j = 0; j < randomizedTest.answers[i].length; j += 1) {
+              if (randomizedTest.answers[i][j] === 1) {
+                correctCount += 1;
+              }
+            }
+
+            for (let j = 0; j < randomizedTest.choices[i].length; j += 1) {
+              const choiceLabelElement = document.createElement("label"),
+                choiceInputElement = document.createElement("input");
+
+              choiceInputElement.setAttribute(
+                "name",
+                (correctCount === 1 ? "radio" : "check") + i
+              );
+              choiceInputElement.setAttribute(
+                "type",
+                correctCount === 1 ? "radio" : "checkbox"
+              );
+              choiceInputElement.setAttribute("value", j);
+
+              choiceLabelElement.classList.add("choice");
+              if (randomizedTest.answers[i][j] === 1) {
+                choiceLabelElement.classList.add("correct");
+              }
+
+              choiceLabelElement.appendChild(choiceInputElement);
+              choiceLabelElement.appendChild(
+                document.createTextNode(randomizedTest.choices[i][j])
+              );
+
+              qElement.appendChild(choiceLabelElement);
+              parent.appendChild(qElement);
+            }
+          }
+        }
+
+        const questions = [
+            "What can you find in Rustici Software's office?",
+            "All of Rustici Software employees are expected to work no more than ____ hours per week.",
+            "The end users of Rustici Software's products number in the _________",
+            "Rustici Software is a (choose all that apply):",
+            "Tim likes to wear:",
+            "Why should you hire Chris?",
+          ],
+          choices = [
+            [
+              "Dart Board",
+              "Ping Pong Table",
+              "Cubicles",
+              "Laptops with dual monitors",
+              "TPS reports, ummm yeah",
+            ],
+            ["80", "40", "50", "60"],
+            ["Tens", "Hundreds", "Thousands", "Millions", "Billions"],
+            [
+              "Great place to work",
+              "Respected leader in its field",
+              "Place where people don't matter, just results",
+            ],
+            ["Capri pants", "Goth attire", "Sport coat", "T-shirt and shorts"],
+            [
+              "He's hard working",
+              "Works well with others",
+              "Has a cute Boston Terrier",
+              "Fast Learner",
+              "All of the Above",
+            ],
+          ],
+          answers = [
+            [1, 1, 0, 1, 0],
+            [0, 1, 0, 0],
+            [0, 0, 0, 1, 0],
+            [1, 1, 0],
+            [0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 1],
+          ],
+          test = new Test(questions, choices, answers);
+
+        renderTest(test, document.getElementById("questions"));
+      })();
+    </script>
+  </body>
+</html>
